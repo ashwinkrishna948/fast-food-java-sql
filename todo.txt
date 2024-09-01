@@ -1,0 +1,5 @@
+dialogue boxes
+time check
+sort dishes by popularity
+admin
+search dishes

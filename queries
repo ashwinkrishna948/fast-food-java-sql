@@ -1,0 +1,98 @@
+create table users 
+(phone_num varchar (10) primary key,
+name varchar (20),
+address varchar (30),
+password varchar (10)
+);
+
+create table restaurant (r_id number (10) primary key, 
+r_name varchar  (20),
+address varchar (30));
+
+insert into restaurant values (1, 'Dollops', 'Tiger Circle', '17 feb 2013', '18 feb 2018');
+insert into restaurant values (2, 'Hadiqa', 'Tiger Circle', '17 feb 2013', '18 feb 2018');
+
+create table cuisine (c_name varchar (10) primary key);
+insert into cuisine values ('Indian');
+insert into cuisine values ('Italian');
+
+
+create table restaurant_cuisine 
+(
+    rc_id number primary key,
+    r_id number references restuarant,
+    cuisine varchar (20)references cuisine,
+)
+
+insert into restaurant_cuisine values(1, 1, 'Indian');
+insert into restaurant_cuisine values(2, 2, 'Italian');
+
+
+//when only cuisine is known
+
+
+with rids (id) as (select r_id from restaurant_cuisine where cuisine = 'Indian') select r_name from restaurant, rids where rids.id = restaurant.r_id;
+
+//both are known
+with rids (id) as (select r_id from restaurant_cuisine where cuisine = 'Indian') select r_name from restaurant, rids where rids.id = restaurant.r_id and r_name = 'Dollops'
+
+create table dish (d_id number primary key, r_id number references restaurant, d_name varchar (20), price number, isVeg number);
+
+
+insert into dish values(1, 1, 'Chicken Tikka', 140, 0);
+
+insert into dish values(2, 1, 'Paneer Tikka', 120, 1);
+
+create table orders (o_id number primary key, price int, phone_num varchar (20) references users, r_id number references restaurant, order_time timestamp);
+
+create table order_has_dishes (ohd_id number primary key, o_id number references orders, d_id number references dish, quantity int);
+
+
+
+select * from orders where phone_num = '9748700604' order by order_time desc;
+
+select o_id, r_name, price from orders join restaurant on orders.r_id = restaurant.r_id where phone_num = '9748700604' order by order_time desc;
+
+popularity
+
+with dishpop (did, c) as (select d_id, count(d_id) as count from order_has_dishes group by d_id) select d_name, price from dish, dishpop where r_id = 1 and dishpop.did = dish.d_id and isVeg = 1 order by c;
+
+//update user details
+//name
+update users
+set name = "Nehal" where phone_num = "9748700604";
+//address
+update users
+set address = "MIT Block 13" where phone_num= "9748700604";
+//password
+update users set password = "newpass" where phone_num = "9748700604";
+
+
+create or replace procedure genOrderID (
+    price number,
+    phone_num varchar,
+    r_id number,
+    order_time varchar, 
+    newid out number
+)
+as
+maxoid int:=1;
+begin
+    dbms_output.put_line (order_time);
+    select max(o_id) into maxoid from orders;
+    newid := maxoid + 1;
+    insert into orders values (newid, price, phone_num, r_id, to_timestamp (order_time, 'yyyy/MM/dd HH24.mi.ss'));
+end;
+/
+
+begin
+genorderid ()
+
+create or replace procedure generateOHDId (newid out int)
+as
+maxohdid int:= 1;
+begin
+    select max(ohd_id) into maxohdid from order_has_dishes;
+    newid := maxohdid +1;
+end;
+/
